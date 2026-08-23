@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Book Recommendation Engine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Google Font for nicer vibe -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #050816;
+      --card-bg: #0f172a;
+      --card-bg-soft: #111827;
+      --accent: #6366f1;
+      --accent-soft: rgba(99, 102, 241, 0.15);
+      --accent-2: #ec4899;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --border-subtle: #1f2937;
+      --radius-xl: 18px;
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.7);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #1f2937, #020617 45%, #000 85%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1200px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
+      border-radius: 28px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      display: grid;
+      grid-template-columns: minmax(0, 330px) minmax(0, 1fr);
+      overflow: hidden;
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left panel */
+    .left-panel {
+      padding: 24px 24px 20px;
+      border-right: 1px solid var(--border-subtle);
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.12), transparent 55%),
+                  radial-gradient(circle at bottom, rgba(236, 72, 153, 0.18), transparent 60%),
+                  var(--card-bg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .left-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.28), transparent 65%);
+      mix-blend-mode: soft-light;
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .left-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: radial-gradient(circle at center, #4ade80 0, #22c55e 45%, #16a34a 100%);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+    }
+
+    .title {
+      font-size: 26px;
+      line-height: 1.2;
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .gradient-text {
+  background: linear-gradient(120deg, #a855f7, #22d3ee, #f97316);
+  background-clip: text;           /* ← add this line */
+  -webkit-background-clip: text;   /* for Safari / Chrome */
+  color: transparent;
+}
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 260px;
+      margin-bottom: 18px;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: var(--text-muted);
+    }
+
+    .panel-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .panel-card {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 18px;
+      border: 1px solid var(--border-subtle);
+      padding: 14px 14px 12px;
+      margin-bottom: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    .input::placeholder {
+      color: rgba(148, 163, 184, 0.6);
+    }
+
+    .input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4);
+      background: rgba(15, 23, 42, 0.98);
+    }
+
+    .hint-text {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .btn-primary {
+      width: 100%;
+      margin-top: 10px;
+      border: none;
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+      color: white;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.55);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 35px rgba(79, 70, 229, 0.7);
+      filter: brightness(1.05);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.65);
+    }
+
+    .btn-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .mini-metrics {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .metric {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 14px;
+      padding: 7px 8px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      font-size: 11px;
+    }
+
+    .metric span {
+      display: block;
+    }
+
+    .metric-label {
+      color: var(--text-muted);
+    }
+
+    .metric-value {
+      font-weight: 500;
+      font-size: 12px;
+    }
+
+    /* Right panel */
+    .right-panel {
+      padding: 20px 22px 20px;
+      background: radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 58%),
+                  radial-gradient(circle at bottom left, rgba(244, 114, 182, 0.16), transparent 60%),
+                  var(--card-bg-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .right-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .right-title-block h2 {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .right-title-block p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .user-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .user-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.35);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: inline-flex;
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 999px;
+      padding: 3px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      margin-bottom: 8px;
+      width: fit-content;
+    }
+
+    .tab {
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 11px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-muted);
+      transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+      color: #f9fafb;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.55);
+    }
+
+    .tab-icon {
+      font-size: 13px;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) auto;
+      gap: 10px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    @media (max-width: 600px) {
+      .search-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .btn-secondary {
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.98);
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(31, 41, 55, 0.95);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.65);
+    }
+
+    .btn-secondary:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .status-pill {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: #e5e7eb;
+      font-size: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .results-container {
+      flex: 1;
+      background: radial-gradient(circle at top left, rgba(79, 70, 229, 0.18), transparent 50%),
+                  rgba(15, 23, 42, 0.9);
+      border-radius: 18px;
+      border: 1px solid rgba(30, 64, 175, 0.7);
+      padding: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .results-scroll {
+      overflow-y: auto;
+      padding-right: 4px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 10px;
+    }
+
+    .book-card {
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 180px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+    }
+
+    .book-card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(circle at top, rgba(96, 165, 250, 0.2), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .book-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.9);
+      border-color: rgba(129, 140, 248, 0.9);
+      background: radial-gradient(circle at top, rgba(30, 64, 175, 0.6), rgba(15, 23, 42, 0.98));
+    }
+
+    .book-card:hover::before {
+      opacity: 1;
+    }
+
+    .book-header {
+      display: flex;
+      gap: 8px;
+    }
+
+    .cover {
+      width: 48px;
+      height: 64px;
+      border-radius: 10px;
+      background: radial-gradient(circle at top left, #4b5563, #020617);
+      border: 1px solid rgba(75, 85, 99, 0.8);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .book-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .book-title {
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .book-authors {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+
+    .book-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .badge-mini {
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      font-size: 10px;
+    }
+
+    .rating {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .rating span {
+      font-size: 11px;
+    }
+
+    .book-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      line-height: 1.35;
+      max-height: 40px;
+      overflow: hidden;
+    }
+
+    .book-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: #e5e7eb;
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 8px;
+      padding: 24px 10px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .empty-badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px dashed rgba(148, 163, 184, 0.6);
+      font-size: 11px;
+    }
+
+    .empty-emoji {
+      font-size: 26px;
+    }
+
+    .error-text {
+      color: #fecaca;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .loader {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #e5e7eb;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .status-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- LEFT: Preferences / User -->
+    <div class="left-panel">
+      <div class="left-inner">
+        <div class="badge">
+          <span class="badge-dot"></span>
+          <span>Smart Book Match · v1</span>
+        </div>
+
+        <h1 class="title">
+          Your <span class="gradient-text">reading flow</span>,
+          personalized.
+        </h1>
+        <p class="subtitle">
+          Save your vibe once, and we’ll keep curating books that feel like you.
+        </p>
+
+        <div class="pill-row">
+          <div class="pill">✨ Genre-aware</div>
+          <div class="pill">📚 Google Books API</div>
+          <div class="pill">🧠 Learns from ratings</div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-label">Profile</div>
+          <div class="section-title">Who’s reading?</div>
+
+          <div class="form-grid">
+            <div>
+              <div class="field-label">User ID <span style="color:#f97316;">*</span></div>
+              <input id="userId" class="input" placeholder="e.g. mannat" />
+            </div>
+            <div>
+              <div class="field-label">Name</div>
+              <input id="name" class="input" placeholder="Your name (optional)" />
+            </div>
+          </div>
+          <div class="hint-text">
+            Same user ID = same profile, across sessions.
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-label">Preferences</div>
+          <div class="section-title">What do you love?</div>
+
+          <div class="form-grid">
+            <div>
+              <div class="field-label">Preferred genres</div>
+              <input id="genres" class="input" placeholder="Romance, Fantasy, Thriller..." />
+            </div>
+            <div>
+              <div class="field-label">Favorite authors</div>
+              <input id="authors" class="input" placeholder="Colleen Hoover, Murakami..." />
+            </div>
+          </div>
+
+          <button class="btn-primary" id="savePrefsBtn">
+            <span>Save reading profile</span>
+          </button>
+          <div class="btn-text" id="prefsStatus">
+            Your preferences feed the personalized tab on the right.
+          </div>
+        </div>
+
+        <div class="mini-metrics">
+          <div class="metric">
+            <span class="metric-label">Engine mode</span>
+            <span class="metric-value">API · Live</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Source</span>
+            <span class="metric-value">Google Books</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Storage</span>
+            <span class="metric-value">MongoDB Atlas</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Search / Results -->
+    <div class="right-panel">
+      <div class="right-header">
+        <div class="right-title-block">
+          <h2>Browse & discover</h2>
+          <p>Switch modes to either search directly or let the engine decide.</p>
+        </div>
+        <div class="user-chip" id="userChip">
+          <span class="user-dot"></span>
+          <span id="chipUserId">No user yet</span>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-mode="personalized">
+          <span class="tab-icon">🌈</span>
+          <span>Personalized for you</span>
+        </button>
+        <button class="tab" data-mode="genre">
+          <span class="tab-icon">🎭</span>
+          <span>By genre</span>
+        </button>
+        <button class="tab" data-mode="author">
+          <span class="tab-icon">✍️</span>
+          <span>By author</span>
+        </button>
+      </div>
+
+      <div class="search-row">
+        <input
+          id="searchInput"
+          class="input"
+          placeholder="Type a genre or author based on the selected mode..."
+        />
+        <button class="btn-secondary" id="searchBtn">
+          <span id="searchBtnLabel">Get personalized picks</span>
+        </button>
+      </div>
+
+      <div class="status-bar">
+        <div>
+          <span class="status-pill">
+            <span class="status-dot"></span>
+            <span id="modeLabel">Mode: Personalized</span>
+          </span>
+        </div>
+        <div class="status-right">
+          <span id="resultInfo">No search yet.</span>
+          <span id="loader" style="display:none;" class="loader"></span>
+        </div>
+      </div>
+
+      <div class="results-container">
+        <div id="results" class="results-scroll">
+          <!-- Cards injected here -->
+        </div>
+        <div id="emptyState" class="empty-state">
+          <div class="empty-emoji">📖</div>
+          <div class="empty-badge">Ready when you are.</div>
+          <p>
+            Save your profile on the left, then hit
+            <strong>“Get personalized picks”</strong> or search by genre/author.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BASE_URL = "http://127.0.0.1:8000";
+
+    const tabs = document.querySelectorAll(".tab");
+    const searchInput = document.getElementById("searchInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const searchBtnLabel = document.getElementById("searchBtnLabel");
+    const modeLabel = document.getElementById("modeLabel");
+    const resultInfo = document.getElementById("resultInfo");
+    const loader = document.getElementById("loader");
+    const resultsEl = document.getElementById("results");
+    const emptyStateEl = document.getElementById("emptyState");
+    const savePrefsBtn = document.getElementById("savePrefsBtn");
+    const prefsStatus = document.getElementById("prefsStatus");
+    const userChip = document.getElementById("userChip");
+    const chipUserId = document.getElementById("chipUserId");
+
+    let mode = "personalized"; // "personalized" | "genre" | "author"
+
+    function getUserId() {
+      return document.getElementById("userId").value.trim();
+    }
+
+    function getName() {
+      return document.getElementById("name").value.trim();
+    }
+
+    function getGenres() {
+      const val = document.getElementById("genres").value.trim();
+      if (!val) return [];
+      return val.split(",").map((g) => g.trim()).filter(Boolean);
+    }
+
+    function getAuthors() {
+      const val = document.getElementById("authors").value.trim();
+      if (!val) return [];
+      return val.split(",").map((a) => a.trim()).filter(Boolean);
+    }
+
+    function setLoading(isLoading) {
+      loader.style.display = isLoading ? "inline-block" : "none";
+      searchBtn.disabled = isLoading;
+    }
+
+    function showEmptyState(show) {
+      emptyStateEl.style.display = show ? "flex" : "none";
+      resultsEl.style.display = show ? "none" : "grid";
+    }
+
+    function updateModeUI() {
+      tabs.forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.mode === mode);
+      });
+
+      if (mode === "personalized") {
+        searchInput.placeholder = "Optional: tweak mood (e.g. cozy, dark academia)...";
+        searchBtnLabel.textContent = "Get personalized picks";
+        modeLabel.textContent = "Mode: Personalized";
+      } else if (mode === "genre") {
+        searchInput.placeholder = "Type a genre (Romance, Fantasy, Thriller...)";
+        searchBtnLabel.textContent = "Search by genre";
+        modeLabel.textContent = "Mode: Genre search";
+      } else {
+        searchInput.placeholder = "Type an author name";
+        searchBtnLabel.textContent = "Search by author";
+        modeLabel.textContent = "Mode: Author search";
+      }
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        mode = tab.dataset.mode;
+        updateModeUI();
+        resultInfo.textContent = "Mode changed. Run a search to see results.";
+        showEmptyState(true);
+        resultsEl.innerHTML = "";
+      });
+    });
+
+    async function savePreferences() {
+      const userId = getUserId();
+      if (!userId) {
+        prefsStatus.textContent = "Please set a user ID first.";
+        prefsStatus.classList.add("error-text");
+        return;
+      }
+      prefsStatus.classList.remove("error-text");
+
+      const payload = {
+        name: getName() || null,
+        preferred_genres: getGenres(),
+        preferred_authors: getAuthors(),
+      };
+
+      try {
+        prefsStatus.textContent = "Saving preferences...";
+        savePrefsBtn.disabled = true;
+
+        const res = await fetch(`${BASE_URL}/user/${encodeURIComponent(userId)}/preferences`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) throw new Error("Failed to save preferences");
+
+        prefsStatus.textContent = "Preferences saved. Personalized mode is now smarter ✨";
+        chipUserId.textContent = `User: ${userId}`;
+      } catch (err) {
+        console.error(err);
+        prefsStatus.textContent = "Could not save preferences. Check if backend is running.";
+        prefsStatus.classList.add("error-text");
+      } finally {
+        savePrefsBtn.disabled = false;
+      }
+    }
+
+    savePrefsBtn.addEventListener("click", savePreferences);
+
+    async function runSearch() {
+      const userId = getUserId();
+      const query = searchInput.value.trim();
+
+      if (!userId && mode === "personalized") {
+        resultInfo.textContent = "Set a user ID and preferences on the left for personalized mode.";
+        resultInfo.style.color = "#fecaca";
+        return;
+      } else {
+        resultInfo.style.color = "";
+      }
+
+      let url = "";
+      if (mode === "personalized") {
+        url = `${BASE_URL}/user/${encodeURIComponent(userId)}/recommendations`;
+      } else if (mode === "genre") {
+        if (!query) {
+          resultInfo.textContent = "Please type a genre.";
+          resultInfo.style.color = "#fecaca";
+          return;
+        }
+        url = `${BASE_URL}/search/genre/${encodeURIComponent(query)}`;
+      } else {
+        if (!query) {
+          resultInfo.textContent = "Please type an author name.";
+          resultInfo.style.color = "#fecaca";
+          return;
+        }
+        url = `${BASE_URL}/search/author/${encodeURIComponent(query)}`;
+      }
+
+      setLoading(true);
+      resultInfo.style.color = "";
+      resultInfo.textContent = "Fetching books...";
+      resultsEl.innerHTML = "";
+      showEmptyState(false);
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        let books = [];
+        if (mode === "personalized") {
+          books = data.books || [];
+        } else {
+          books = data.books || [];
+        }
+
+        if (!books.length) {
+          resultInfo.textContent = "No books found for this query.";
+          showEmptyState(true);
+          return;
+        }
+
+        resultInfo.textContent = `Showing ${books.length} book(s).`;
+        renderBooks(books);
+      } catch (err) {
+        console.error(err);
+        resultInfo.textContent = "Error while fetching books. Check the console / backend.";
+        resultInfo.style.color = "#fecaca";
+        showEmptyState(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+   function renderBooks(books) {
+  console.log("renderBooks called with", books.length, "books");
+  resultsEl.innerHTML = "";
+
+  books.forEach((book) => {
+    const normalized = normalizeBook(book);
+
+    const {
+      title,
+      authors,
+      thumbnail,
+      categories,
+      description,
+      average_rating,
+    } = normalized;
+
+    const card = document.createElement("div");
+    card.className = "book-card";
+
+    const header = document.createElement("div");
+    header.className = "book-header";
+
+    const cover = document.createElement("div");
+    cover.className = "cover";
+    if (thumbnail) {
+      const img = document.createElement("img");
+      img.src = thumbnail;
+      img.alt = title;
+      cover.appendChild(img);
+    }
+
+    const main = document.createElement("div");
+    main.className = "book-main";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "book-title";
+    titleEl.textContent = title;
+
+    const authorsEl = document.createElement("div");
+    authorsEl.className = "book-authors";
+    authorsEl.textContent = authors || "Unknown author";
+
+    const meta = document.createElement("div");
+    meta.className = "book-meta";
+
+    if (categories) {
+      const cat = document.createElement("div");
+      cat.className = "badge-mini";
+      cat.textContent = categories;
+      meta.appendChild(cat);
+    }
+
+    if (average_rating !== null) {
+      const rating = document.createElement("div");
+      rating.className = "rating";
+      rating.innerHTML = `<span>★</span><span>${average_rating}</span>`;
+      meta.appendChild(rating);
+    }
+
+    main.appendChild(titleEl);
+    main.appendChild(authorsEl);
+    main.appendChild(meta);
+
+    header.appendChild(cover);
+    header.appendChild(main);
+
+    const descEl = document.createElement("div");
+    descEl.className = "book-desc";
+    descEl.textContent = description || "No description available.";
+
+    const tagsRow = document.createElement("div");
+    tagsRow.className = "book-tags";
+
+    (categories || "").split("•").forEach((cat) => {
+      const trimmed = cat.trim();
+      if (!trimmed) return;
+      const tag = document.createElement("div");
+      tag.className = "tag";
+      tag.textContent = trimmed;
+      tagsRow.appendChild(tag);
+    });
+
+    card.appendChild(header);
+    card.appendChild(descEl);
+    if (tagsRow.children.length) {
+      card.appendChild(tagsRow);
+    }
+
+    // --------- SIMPLE RATING UI ----------
+    const ratingRow = document.createElement("div");
+    ratingRow.style.marginTop = "6px";
+    ratingRow.style.display = "flex";
+    ratingRow.style.alignItems = "center";
+    ratingRow.style.gap = "4px";
+
+    const ratingLabel = document.createElement("div");
+    ratingLabel.style.fontSize = "10px";
+    ratingLabel.style.color = "var(--text-muted)";
+    ratingLabel.textContent = "Rate:";
+    ratingRow.appendChild(ratingLabel);
+
+    let selectedRating = 0;
+    const stars = [];
+
+    function updateStarColors(activeCount) {
+      stars.forEach((starEl, index) => {
+        starEl.style.color = index < activeCount ? "#fbbf24" : "#64748b";
+      });
+    }
+
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement("span");
+      star.textContent = "★";
+      star.style.cursor = "pointer";
+      star.style.fontSize = "14px";
+      star.style.color = "#64748b";
+
+      // hover preview
+      star.addEventListener("mouseover", () => {
+        updateStarColors(i);
+      });
+
+      // reset to selected rating when leaving
+      star.addEventListener("mouseout", () => {
+        updateStarColors(selectedRating);
+      });
+
+      // click = set rating + send to backend + keep color
+      star.addEventListener("click", async () => {
+        const userId = getUserId();
+        if (!userId) {
+          alert("Please enter User ID before rating");
+          return;
+        }
+
+        selectedRating = i;
+        updateStarColors(selectedRating);
+
+        const genres = categories
+          ? categories.split("•").map((g) => g.trim()).filter(Boolean)
+          : [];
+
+        const authorList = authors
+          ? authors.split(",").map((a) => a.trim()).filter(Boolean)
+          : [];
+
+        const payload = {
+          book_id: book.book_id || book.id || title,
+          title: title,
+          authors: authorList,
+          rating: i,
+          genres: genres,
+        };
+
+        try {
+          const res = await fetch(
+            `${BASE_URL}/user/${encodeURIComponent(userId)}/ratings`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            }
+          );
+
+          if (!res.ok) throw new Error("Failed to save rating");
+          console.log(`Saved rating ★${i} for`, title);
+        } catch (err) {
+          console.error(err);
+          alert("Could not save rating. Check backend.");
+        }
+      });
+
+      stars.push(star);
+      ratingRow.appendChild(star);
+    }
+
+    card.appendChild(ratingRow);
+    // -------------------------------
+
+    resultsEl.appendChild(card);
+  });
+}
+
+
+    function normalizeBook(book) {
+      // Our backend already sends a nice structure, so we just map it safely
+      return {
+        title: book.title || "Untitled",
+        authors: (book.authors || []).join(", "),
+        thumbnail: book.thumbnail || null,
+        categories: (book.categories || []).join(" • "),
+        description: book.description || "",
+        average_rating: book.average_rating ?? null,
+      };
+    }
+
+    searchBtn.addEventListener("click", runSearch);
+    searchInput.addEventListener("keyup", (e) => {
+      if (e.key === "Enter") {
+        runSearch();
+      }
+    });
+
+    document.getElementById("userId").addEventListener("input", () => {
+      const userId = getUserId();
+      chipUserId.textContent = userId ? `User: ${userId}` : "No user yet";
+    });
+
+    updateModeUI();
+    showEmptyState(true);
+  </script>
+</body>
+</html>

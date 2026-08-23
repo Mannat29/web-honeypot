@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Honeypot Dashboard</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #0d1117;
+      color: #e6edf3;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #161b22;
+      color: #58a6ff;
+      padding: 15px 20px;
+      font-size: 24px;
+      text-align: center;
+      font-weight: bold;
+    }
+    main {
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #30363d;
+      text-align: left;
+    }
+    th {
+      background-color: #21262d;
+      color: #58a6ff;
+      position: sticky;
+      top: 0;
+    }
+    tr:hover {
+      background-color: #1f6feb33;
+    }
+    .status {
+      color: #8b949e;
+      font-size: 14px;
+    }
+    .refresh {
+      float: right;
+      background-color: #238636;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .refresh:hover {
+      background-color: #2ea043;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    🕵️ Honeypot Dashboard
+    <button class="refresh" onclick="fetchLogs()">Refresh</button>
+  </header>
+
+  <main>
+    <p class="status">Loading logs...</p>
+    <table id="logTable">
+      <thead>
+        <tr>
+          <th>Time (UTC)</th>
+          <th>IP</th>
+          <th>Path</th>
+          <th>Method</th>
+          <th>User Agent</th>
+          <th>Extra</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
+
+  <script>
+    async function fetchLogs() {
+      const status = document.querySelector(".status");
+      status.textContent = "Refreshing...";
+      try {
+        const response = await fetch("/api/logs");
+        const data = await response.json();
+        const tbody = document.querySelector("#logTable tbody");
+        tbody.innerHTML = "";
+        data.slice().reverse().forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${row.timestamp || ""}</td>
+            <td>${row.ip || ""}</td>
+            <td>${row.path || ""}</td>
+            <td>${row.method || ""}</td>
+            <td>${row.user_agent || ""}</td>
+            <td>${row.extra || ""}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+        status.textContent = "Last updated: " + new Date().toLocaleTimeString();
+      } catch (err) {
+        status.textContent = "Failed to load logs ❌";
+        console.error(err);
+      }
+    }
+
+    // Auto-refresh every 10 seconds
+    fetchLogs();
+    setInterval(fetchLogs, 10000);
+  </script>
+</body>
+</html>

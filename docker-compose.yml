@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+  honeypot:
+    build: .
+    container_name: web_honeypot
+    restart: unless-stopped
+    ports:
+      - "8080:8080"      # bind only on isolated lab network or VM!
+    env_file:
+      - .env
+    volumes:
+      - ./honeypot_log.csv:/app/honeypot_log.csv

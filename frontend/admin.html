@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin Login — Control Panel</title>
+
+  <!-- Tailwind CDN (no build step) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* small custom tweaks */
+    body { background: linear-gradient(180deg,#0f172a 0%, #071028 100%); }
+    .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(6px); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center text-white p-6">
+  <div class="max-w-3xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- left: branding / info -->
+    <div class="p-6 glass rounded-2xl shadow-lg">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="bg-indigo-600 rounded-md p-2">
+          <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11c2.21 0 4-1.79 4-4S14.21 3 12 3 8 4.79 8 7s1.79 4 4 4zM6 21h12" /></svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-semibold">Acme Control Panel</h1>
+          <p class="text-sm text-gray-300">Administration console — Sign in to continue</p>
+        </div>
+      </div>
+
+      <div class="text-sm text-gray-300 mb-4">
+        <p>Welcome back. Enter your credentials to continue. For security, this session will be audited.</p>
+      </div>
+
+      <div class="space-y-3 mt-4 text-xs text-gray-400">
+        <div><strong>Last login:</strong> <span id="last-login">—</span></div>
+        <div><strong>IP:</strong> <span id="client-ip">—</span></div>
+      </div>
+
+      <div class="mt-6 text-xs text-gray-500">
+        <p>© Acme Corporation — Internal Use Only</p>
+      </div>
+    </div>
+
+    <!-- right: login form -->
+    <div class="p-6 glass rounded-2xl shadow-lg">
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="text-xs text-gray-300">Username</label>
+          <input id="username" name="username" type="text" autocomplete="username" required
+                 class="mt-1 block w-full px-3 py-2 rounded bg-transparent border border-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-300">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required
+                 class="mt-1 block w-full px-3 py-2 rounded bg-transparent border border-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none" />
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <input id="remember" type="checkbox" class="h-4 w-4 rounded bg-gray-600" />
+            <label for="remember" class="text-xs text-gray-300">Remember this device</label>
+          </div>
+          <a href="#" class="text-xs text-indigo-400 hover:underline">Forgot password?</a>
+        </div>
+
+        <div>
+          <button id="submitBtn" type="submit"
+                  class="w-full py-2 rounded bg-indigo-600 hover:bg-indigo-700 font-medium">Sign in</button>
+        </div>
+
+        <div id="msg" class="text-sm mt-2 h-6 mono"></div>
+
+        <div class="mt-4 text-xs text-gray-500">
+          <p>Note: This page is monitored for unauthorized access.</p>
+        </div>
+      </form>
+
+      <hr class="my-4 border-gray-700" />
+
+      <div class="text-xs text-gray-400">
+        <strong>Service status</strong>
+        <div class="mt-2">
+          <span class="inline-block px-2 py-1 text-xs rounded bg-green-700">All systems operational</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(async () => {
+  // show client IP if available
+  try {
+    const r = await fetch('https://api.ipify.org?format=json');
+    const j = await r.json();
+    document.getElementById('client-ip').textContent = j.ip || '—';
+  } catch(e) { /* ignore */ }
+
+  // Basic message handling and POST to backend /admin (preserves logging)
+  const form = document.getElementById('loginForm');
+  const msg = document.getElementById('msg');
+  const submitBtn = document.getElementById('submitBtn');
+
+  // optional deception: after N failed attempts show fake success (disabled by default)
+  const ALLOW_FAKE_SUCCESS = false;
+  let failed = 0;
+  const FAKE_SUCCESS_AFTER = 3;
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    msg.textContent = 'Signing in...';
+    submitBtn.disabled = true;
+
+    const payload = new URLSearchParams(new FormData(form));
+    try {
+      // send actual POST (same as a normal form submit) so backend logs it
+      const res = await fetch('/admin', { method: 'POST', body: payload, credentials: 'same-origin' });
+
+      // backend currently returns 401 (Invalid), catch that by status
+      if (res.ok) {
+        // (unlikely) server returned 200
+        msg.textContent = 'Welcome back — redirecting...';
+        // optionally redirect to a fake admin panel you can add later
+      } else {
+        failed++;
+        // if you want to lure further, you can enable FAKE success to show a "logged in" interface
+        if (ALLOW_FAKE_SUCCESS && failed >= FAKE_SUCCESS_AFTER) {
+          msg.innerHTML = '<span style="color:#60a5fa">Login successful. Loading admin console…</span>';
+          // here you could redirect to /admin_console (create a static page) to keep attacker busy
+        } else {
+          msg.innerHTML = '<span style="color:#fca5a5">Invalid username or password</span>';
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      msg.textContent = 'Network error';
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>
